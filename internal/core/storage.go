@@ -40,6 +40,13 @@ type ChunkPointer struct {
 	ReplicaLocations []string `json:"replicaLocations"`
 }
 
+// A simple in-memory user database.
+var Users = map[string]string{
+	"user123": "admin",
+	"user456": "contributor",
+	"user789": "reader",
+}
+
 // This simulates a single token for a logged-in user to keep the prototype simple.
 const LoggedInUser = "user456"
 
@@ -279,4 +286,21 @@ func calculateChecksum(data []byte) string {
 	hash := sha256.New()
 	hash.Write(data)
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+// hasPermission simulates the RBAC check.
+func hasPermission(perm string, user string) bool {
+	role, ok := Users[user]
+	if !ok {
+		return false
+	}
+	switch role {
+	case "admin":
+		return true
+	case "contributor":
+		return perm == "files:write" || perm == "files:read" || perm == "files:delete"
+	case "reader":
+		return perm == "files:read"
+	}
+	return false
 }
